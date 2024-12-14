@@ -1,6 +1,7 @@
 ### 2024
 | Day | Link to description | Link to solution
 |:---|:---|:---:|
+| 13 | [Day13](https://adventofcode.com/2024/day/13) | [Solution](https://github.com/T1r1osh/advent-of-code/tree/main/solutions/2024/Day13)|
 | 12 | [Day12](https://adventofcode.com/2024/day/12) | [Solution](https://github.com/T1r1osh/advent-of-code/tree/main/solutions/2024/Day12)|
 | 11 | [Day11](https://adventofcode.com/2024/day/11) | [Solution](https://github.com/T1r1osh/advent-of-code/tree/main/solutions/2024/Day11)|
 | 10 | [Day10](https://adventofcode.com/2024/day/10) | [Solution](https://github.com/T1r1osh/advent-of-code/tree/main/solutions/2024/Day10)|
