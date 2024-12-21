@@ -9,66 +9,65 @@ import (
 )
 
 var numPad map[string][2]int
-var keyPad map[string][2]int
+var dirPad map[string][2]int
+
+func init() {
+	numPad = make(map[string][2]int, 12)
+	numPad["0"] = [2]int{1, 0}
+	numPad["A"] = [2]int{2, 0}
+	numPad["1"] = [2]int{0, 1}
+	numPad["2"] = [2]int{1, 1}
+	numPad["3"] = [2]int{2, 1}
+	numPad["4"] = [2]int{0, 2}
+	numPad["5"] = [2]int{1, 2}
+	numPad["6"] = [2]int{2, 2}
+	numPad["7"] = [2]int{0, 3}
+	numPad["8"] = [2]int{1, 3}
+	numPad["9"] = [2]int{2, 3}
+
+	dirPad = make(map[string][2]int, 6)
+	dirPad["^"] = [2]int{1, 1}
+	dirPad["A"] = [2]int{2, 1}
+	dirPad["<"] = [2]int{0, 0}
+	dirPad["v"] = [2]int{1, 0}
+	dirPad[">"] = [2]int{2, 0}
+}
 
 func main() {
 	file, _ := os.Open("solutions/2024/Day21/input.txt")
 	defer file.Close()
 
 	codes := []string{}
-
 	scanner := bufio.NewScanner(file)
-
 	for scanner.Scan() {
-
 		line := scanner.Text()
 		codes = append(codes, line)
 	}
 
-	log.Println(codes)
+	log.Println(Task1(codes))
+	log.Println(Task2(codes))
+}
 
-	numPad = make(map[string][2]int, 12)
-
-	numPad["GAP"] = [2]int{0, 3}
-	numPad["0"] = [2]int{1, 3}
-	numPad["A"] = [2]int{2, 3}
-	numPad["1"] = [2]int{0, 2}
-	numPad["2"] = [2]int{1, 2}
-	numPad["3"] = [2]int{2, 2}
-	numPad["4"] = [2]int{0, 1}
-	numPad["5"] = [2]int{1, 1}
-	numPad["6"] = [2]int{2, 1}
-	numPad["7"] = [2]int{0, 0}
-	numPad["8"] = [2]int{1, 0}
-	numPad["9"] = [2]int{2, 0}
-
-	keyPad = make(map[string][2]int, 6)
-
-	keyPad["GAP"] = [2]int{0, 0}
-	keyPad["^"] = [2]int{1, 0}
-	keyPad["A"] = [2]int{2, 0}
-	keyPad["<"] = [2]int{0, 1}
-	keyPad["v"] = [2]int{1, 1}
-	keyPad[">"] = [2]int{2, 1}
-
-	//	log.Println(numToKey("179A"))
-	//log.Println(len(KeyToKey(KeyToKey(("^<<A^^A>>AvvvA")))))
+func Task1(codes []string) int {
 	sum := 0
 	for _, code := range codes {
-		step1 := numToKey(code)
-		step2 := KeyToKey(step1)
-		step3 := KeyToKey(step2)
-		log.Println(code)
-		log.Println(step1)
-		log.Println(step2)
-		log.Println(step3)
-		tmp := calculateComplexity(step3, code)
-		log.Println(len(step3), code)
-		sum += tmp
+		sequence := dirPadToDirPad(dirPadToDirPad((numPadToKeyPad(code))))
+		sum += convertCodeToNum(code) * len(sequence)
 	}
 
-	println(sum)
-	//log.Println(KeyToKey("v<<A>>^A<A>AvA<^AA>A<vAAA>^A"))
+	return sum
+}
+
+func Task2(codes []string) int {
+	sum := 0
+	cache := make(map[string][]int)
+	for _, code := range codes {
+		step1 := numPadToKeyPad(code)
+		step2 := getCountAfterRobot(step1, 26, 1, cache)
+		sum += step2 * convertCodeToNum(code)
+	}
+
+	return sum
 }
 
 //+---+---+---+
@@ -81,84 +80,54 @@ func main() {
 // 	  | 0 | A |
 //+---+---+---+
 
-func calculateComplexity(input, code string) int {
-
-	length := len(input)
-	codeStr := code[:3]
-	codeNum, _ := strconv.Atoi(codeStr)
-	return length * codeNum
-
-}
-
-func numToKey(code string) string {
-
-	sb := strings.Builder{}
-
+func numPadToKeyPad(code string) string {
+	seq := []string{}
 	codeAsArray := strings.Split(code, "")
 	start := numPad["A"]
 	for _, char := range codeAsArray {
 		goal := numPad[char]
 		distance := [2]int{goal[0] - start[0], goal[1] - start[1]}
-		moveX := make([]string, abs(distance[0]))
-		for i, _ := range moveX {
-			key := ""
-			if distance[0] < 0 {
-				key = "<"
+
+		moveX := []string{}
+		for i := 0; i < abs(distance[0]); i++ {
+			if distance[0] >= 0 {
+				moveX = append(moveX, ">")
 			} else {
-				key = ">"
+				moveX = append(moveX, "<")
 			}
-			moveX[i] = key
 		}
 
-		moveY := make([]string, abs(distance[1]))
-		for i, _ := range moveY {
-			key := ""
-			if distance[1] > 0 {
-				key = "v"
+		moveY := []string{}
+		for i := 0; i < abs(distance[1]); i++ {
+			if distance[1] >= 0 {
+				moveY = append(moveY, "^")
 			} else {
-				key = "^"
-			}
-			moveY[i] = key
-		}
-
-		stepX := 0
-		if distance[0] != 0 {
-			stepX = (distance[0] / abs(distance[0]))
-		}
-
-		stepY := 0
-		if distance[1] != 0 {
-			stepY = (distance[1] / abs(distance[1]))
-		}
-		gapFound := false
-		for i := 0; i < len(moveX); i++ {
-			if start[0]+stepX*(i+1) == numPad["GAP"][0] && start[1] == numPad["GAP"][1] {
-				gapFound = true
-			}
-		}
-		if !gapFound {
-			for _, move := range moveX {
-				moveX = moveX[1:]
-				start[0] += stepX
-				sb.WriteString(move)
+				moveY = append(moveY, "v")
 			}
 		}
 
-		for _, move := range moveY {
-			moveY = moveY[1:]
-			start[1] += stepY
-			sb.WriteString(move)
+		// 1. moving with least turns
+		// 2. moving < over ^ over v over >
+
+		if start[1] == 0 && goal[0] == 0 {
+			seq = append(seq, moveY...)
+			seq = append(seq, moveX...)
+		} else if start[0] == 0 && goal[1] == 0 {
+			seq = append(seq, moveX...)
+			seq = append(seq, moveY...)
+		} else if distance[0] < 0 {
+			seq = append(seq, moveX...)
+			seq = append(seq, moveY...)
+		} else if distance[0] >= 0 {
+			seq = append(seq, moveY...)
+			seq = append(seq, moveX...)
 		}
 
-		for _, move := range moveX {
-			start[0] += stepX
-			sb.WriteString(move)
-		}
+		start = goal
+		seq = append(seq, "A")
 
-		sb.WriteString("A")
-		// x pos akkor < y negativ akkor ^ x neg > ha x pos v
 	}
-	return sb.String()
+	return strings.Join(seq[:], "")
 }
 
 //+---+---+---+
@@ -167,74 +136,101 @@ func numToKey(code string) string {
 //| < | v | > |
 //+---+---+---+
 
-func KeyToKey(code string) string {
-
-	sb := strings.Builder{}
-
+func dirPadToDirPad(code string) string {
+	seq := []string{}
 	codeAsArray := strings.Split(code, "")
-	start := keyPad["A"]
+	start := dirPad["A"]
 	for _, char := range codeAsArray {
-		goal := keyPad[char]
+		goal := dirPad[char]
 		distance := [2]int{goal[0] - start[0], goal[1] - start[1]}
-		moveX := make([]string, abs(distance[0]))
-		for i, _ := range moveX {
-			key := ""
-			if distance[0] < 0 {
-				key = "<"
+
+		moveX := []string{}
+		for i := 0; i < abs(distance[0]); i++ {
+			if distance[0] >= 0 {
+				moveX = append(moveX, ">")
 			} else {
-				key = ">"
+				moveX = append(moveX, "<")
 			}
-			moveX[i] = key
 		}
 
-		moveY := make([]string, abs(distance[1]))
-		for i, _ := range moveY {
-			key := ""
-			if distance[1] > 0 {
-				key = "v"
+		moveY := []string{}
+		for i := 0; i < abs(distance[1]); i++ {
+			if distance[1] >= 0 {
+				moveY = append(moveY, "^")
 			} else {
-				key = "^"
-			}
-			moveY[i] = key
-		}
-
-		stepX := 0
-		if distance[0] != 0 {
-			stepX = (distance[0] / abs(distance[0]))
-		}
-
-		stepY := 0
-		if distance[1] != 0 {
-			stepY = (distance[1] / abs(distance[1]))
-		}
-		gapFound := false
-		for i := 0; i < len(moveX); i++ {
-			if start[0]+stepX*(i+1) == numPad["GAP"][0] && start[1] == numPad["GAP"][1] {
-				gapFound = true
+				moveY = append(moveY, "v")
 			}
 		}
-		if !gapFound {
-			for _, move := range moveX {
-				moveX = moveX[1:]
-				start[0] += stepX
-				sb.WriteString(move)
-			}
-		}
-		for _, move := range moveY {
-			moveY = moveY[1:]
-			start[1] += stepY
-			sb.WriteString(move)
+
+		// 1. moving with least turns
+		// 2. moving < over ^ over v over >
+
+		if start[0] == 0 && goal[1] == 1 {
+			seq = append(seq, moveX...)
+			seq = append(seq, moveY...)
+		} else if start[1] == 1 && goal[0] == 0 {
+			seq = append(seq, moveY...)
+			seq = append(seq, moveX...)
+		} else if distance[0] < 0 {
+			seq = append(seq, moveX...)
+			seq = append(seq, moveY...)
+		} else if distance[0] >= 0 {
+			seq = append(seq, moveY...)
+			seq = append(seq, moveX...)
 		}
 
-		for _, move := range moveX {
-			start[0] += stepX
-			sb.WriteString(move)
-		}
+		start = goal
+		seq = append(seq, "A")
 
-		sb.WriteString("A")
-		// x pos akkor < y negativ akkor ^ x neg > ha x pos v
 	}
-	return sb.String()
+	return strings.Join(seq[:], "")
+}
+
+func getCountAfterRobot(seq string, maxRobots, robot int, cache map[string][]int) int {
+	if val, ok := cache[seq]; ok {
+		if val[robot-1] != 0 {
+			return val[robot-1]
+		}
+	} else {
+		cache[seq] = make([]int, maxRobots)
+	}
+
+	steps := dirPadToDirPad(seq)
+	cache[seq][0] = len(steps)
+
+	if robot == maxRobots {
+		return len(seq)
+	}
+
+	splitSeq := getIndividualSteps(steps)
+	count := 0
+	for _, s := range splitSeq {
+		// calculate small chunks
+		c := getCountAfterRobot(s, maxRobots, robot+1, cache)
+		if _, ok := cache[s]; !ok {
+			cache[s] = make([]int, maxRobots)
+		}
+		cache[s][0] = c
+		count += c
+	}
+	cache[seq][robot-1] = count
+	return count
+
+}
+
+func getIndividualSteps(input string) []string {
+	inputArray := strings.Split(input, "")
+	output := []string{}
+	current := []string{}
+
+	for _, char := range inputArray {
+		current = append(current, char)
+		if char == "A" {
+			output = append(output, strings.Join(current, ""))
+			current = []string{}
+		}
+	}
+	return output
 }
 
 func abs(a int) int {
@@ -242,4 +238,9 @@ func abs(a int) int {
 		return a * -1
 	}
 	return a
+}
+
+func convertCodeToNum(code string) int {
+	codeNum, _ := strconv.Atoi(code[:3])
+	return codeNum
 }

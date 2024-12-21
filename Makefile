@@ -19,5 +19,5 @@ test-%:
 	&& DAY=$(shell echo $@ | cut -c3-4) \
 	&& FULL_YEAR="20$$YEAR" \
 	&& FULL_DAY="Day$$DAY" \
-	&& $(GO_CMD) $(MAIN_DIR)/$$FULL_YEAR/"$$FULL_DAY"/main.go
+	&& $(GO_CMD) $(MAIN_DIR)/$$FULL_YEAR/"$$FULL_DAY"/*.go
 
