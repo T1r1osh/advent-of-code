@@ -172,7 +172,7 @@ func BronKerbosch(currentClique []string, yetToConsider []string, alreadyConside
 func findMaxCliques(lanMap map[string]map[string]struct{}) string {
 	maxClique := []string{}
 	allComputers := []string{}
-	for key, _ := range lanMap {
+	for key := range lanMap {
 		allComputers = append(allComputers, key)
 	}
 	cliques := BronKerbosch([]string{}, allComputers, []string{}, lanMap, [][]string{})
